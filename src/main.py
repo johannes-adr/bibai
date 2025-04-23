@@ -16,14 +16,15 @@ from doc2text.imagedocument_doc2text_adapter import ImageDocument2TextAdapter
 def main():
     API_HOST = os.getenv("IMMICH_API_HOST")
     API_KEY = os.getenv("IMMICH_API_KEY")
+    OCR_LANG = os.getenv("OCR_LANG", "en")
 
     database_port = ImmichAPIDatabasePort(ImmichApiSession(API_HOST, API_KEY))
     
     document2text_port = Document2TextMultiplexer()
-    document2text_port.register_adapter(ImageDocument2TextAdapter())
+    document2text_port.register_adapter(ImageDocument2TextAdapter(OCR_LANG))
 
     controller = Bibai(database_port, document2text_port)
     controller.update()
-    pass
+
 
 main()

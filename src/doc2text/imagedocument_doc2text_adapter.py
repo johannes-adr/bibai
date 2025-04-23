@@ -28,7 +28,7 @@ cache = parse_immich_ocr_cache()
 # Module‐level cache of the OCR instance
 _ocr: Optional[PaddleOCR] = None
 
-def _get_ocr() -> PaddleOCR:
+def _get_ocr(lang: str) -> PaddleOCR:
     """
     Lazily instantiate and return the PaddleOCR engine.
     """
@@ -39,13 +39,25 @@ def _get_ocr() -> PaddleOCR:
         logging.getLogger("paddleocr").setLevel(logging.INFO)
         _ocr = PaddleOCR(
             use_angle_cls=True,
-            lang='de',
+            lang=lang,
             use_gpu=gpu_available
         )
     return _ocr
 
 class ImageDocument2TextAdapter(Document2TextPort):
+    def __init__(self, lang: str):
+        """
+        Initialize the ImageDocument2TextAdapter with the specified language.
+        """
+        super().__init__()
+        self.lang = lang
+
     def document2text(self, document: Document) -> str:
+        """
+        Convert the given image to text using OCR.
+
+        If the document is not an ImageDocument, raise a ValueError.
+        """
         if not isinstance(document, ImageDocument):
             raise ValueError("Document is not an ImageDocument")
         
@@ -62,7 +74,7 @@ class ImageDocument2TextAdapter(Document2TextPort):
         if image is None:  # type: ignore[comparison-overlap]
             raise ValueError("Failed to decode image from binary data")
 
-        ocr_engine = _get_ocr()
+        ocr_engine = _get_ocr(self.lang)
 
         # Run OCR on the image
         result: Optional[List[List[Tuple[Any, Tuple[str, float]]]]] = ocr_engine.ocr(image, cls=True)  # type: ignore
